@@ -147,6 +147,11 @@ class Domain():
                         el_field = f.field_at_particle_position(
                             p, self.time_grid.current_time )
                         total_el_field = total_el_field.add( el_field )
+                    for f in self.external_fields.electric_file:
+                        print(self.external_fields.electric_file)
+#                        el_field = f.field_at_particle_position(
+#                            p, self.time_grid.current_time )
+#                        total_el_field = total_el_field.add( el_field )
                     pic_el_field = self.particle_to_mesh_map.field_at_particle_position(
                         self.spat_mesh, p )
                     total_el_field = total_el_field.add( pic_el_field )

@@ -1,12 +1,13 @@
 import sys
 
 from ExternalFields import ExternalField
-from ExternalFields import ExternalFieldMagneticUniform, ExternalFieldElectricUniform
+from ExternalFields import ExternalFieldMagneticUniform, ExternalFieldElectricUniform, ExternalFieldElectricFile
 
 class ExternalFieldsManager():
 
     def __init__( self ):
         self.electric = []
+        self.electric_file = []
         self.magnetic = []
         pass
 
@@ -14,6 +15,7 @@ class ExternalFieldsManager():
     def init_from_config( cls, conf ):
         new_obj = cls()
         new_obj.electric = []
+        new_obj.electric_file = []
         new_obj.magnetic = []
         for sec_name in conf:
             if ExternalFieldMagneticUniform.is_magnetic_uniform_config_part( sec_name ):
@@ -24,6 +26,10 @@ class ExternalFieldsManager():
                 new_obj.electric.append(
                     ExternalFieldElectricUniform.init_from_config(
                         conf[ sec_name ], sec_name ) )
+            elif ExternalFieldElectricFile.is_electric_file_config_part(sec_name):
+                new_obj.electric_file.append(
+                    ExternalFieldElectricFile.init_from_config(
+                        conf[sec_name], sec_name))
         return new_obj
 
     @classmethod
