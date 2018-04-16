@@ -146,20 +146,30 @@ class EfConf:
         os.chdir( current_dir )
 
 
+    # def run_command( self, command ):
+    #     #https://www.endpoint.com/blog/2015/01/28/getting-realtime-output-using-python
+    #     process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
+    #     while True:
+    #         output = process.stdout.readline()
+    #         if output == '' and process.poll() is not None:
+    #             break
+    #         if output:
+    #             print( output.strip() )
+    #     rc = process.poll()
+    #     return rc
+
     def run_command( self, command ):
-        #https://www.endpoint.com/blog/2015/01/28/getting-realtime-output-using-python
-        process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
-        while True:
-            output = process.stdout.readline()
-            if output == '' and process.poll() is not None:
-                break
-            if output:
-                print( output.strip() )
-        rc = process.poll()
-        return rc
-    # try instead
-    # https://stackoverflow.com/questions/4417546/constantly-print-subprocess-output-while-process-is-running
+        # https://stackoverflow.com/questions/4417546/constantly-print-subprocess-output-while-process-is-running
+        popen = subprocess.Popen(shlex.split(command),
+                                 stdout=subprocess.PIPE, universal_newlines=True)
+        for line in popen.stdout:
+            print( line, end='' )
+        popen.stdout.close()
+        return_code = popen.wait()
+        if return_code:
+            raise subprocess.CalledProcessError( return_code, command )
         
+
         
 class TimeGrid:
 
@@ -433,6 +443,208 @@ class InnerRegionTubeAlongZSegment():
         return as_dict        
 
 
+
+
+class InnerRegionTubeAlongAxis():
+    def __init__( self, name = 'tube',
+                  potential = 0, axis = 'z',
+                  tube_axis_start_x = 1, tube_axis_start_y = 1, tube_axis_start_z = 1,
+                  tube_length = 3,
+                  tube_inner_radius = 0.5, tube_outer_radius = 1 ):        
+        self.name = name
+        self.potential = potential
+        self.axis = axis
+        self.tube_axis_start_x = tube_axis_start_x
+        self.tube_axis_start_y = tube_axis_start_y
+        self.tube_axis_start_z = tube_axis_start_z
+        if axis == 'x':                        
+            self.tube_axis_end_x = tube_axis_start_x + tube_length
+            self.tube_axis_end_y = tube_axis_start_y
+            self.tube_axis_end_z = tube_axis_start_z
+        elif axis == 'y':
+            self.tube_axis_end_x = tube_axis_start_x
+            self.tube_axis_end_y = tube_axis_start_y + tube_length
+            self.tube_axis_end_z = tube_axis_start_z
+        elif axis == 'z':
+            self.tube_axis_end_x = tube_axis_start_x
+            self.tube_axis_end_y = tube_axis_start_y
+            self.tube_axis_end_z = tube_axis_start_z + tube_length
+        else:
+            print( 'Unknown axis:', axis, ". Choose one of 'x', 'y', 'z'" )
+            return None
+        self.tube_inner_radius = tube_inner_radius
+        self.tube_outer_radius = tube_outer_radius
+
+
+    def visualize( self, ax ):
+        self.draw_tube( ax )
+
+
+    def draw_tube( self, ax ):
+        vertices = []
+        arc_step = 5.0 / 180.0 * np.pi
+        phi1 = 0
+        phi2 = 2.0 * np.pi
+        r1 = self.tube_inner_radius
+        r2 = self.tube_outer_radius
+        if self.axis == 'z':            
+            shift_x = self.tube_axis_start_x
+            shift_y = self.tube_axis_start_y
+            z1 = self.tube_axis_start_z
+            z2 = self.tube_axis_end_z
+            for phi in np.arange( phi1, phi2, arc_step ):
+                vertices.append( [shift_x + r1 * np.cos(phi),
+                                  shift_y + r1 * np.sin(phi), z1] )
+            vertices.append( [shift_x + r1 * np.cos(phi2),
+                              shift_y + r1 * np.sin(phi2), z1] )
+            vertices.append( [shift_x + r2 * np.cos(phi2),
+                              shift_y + r2 * np.sin(phi2), z1] )
+            for phi in np.arange( phi2, phi1, -arc_step ):
+                vertices.append( [shift_x + r2 * np.cos(phi),
+                                  shift_y + r2 * np.sin(phi), z1] )
+            vertices.append( [shift_x + r2 * np.cos(phi1),
+                              shift_y + r2 * np.sin(phi1), z1] )
+            vertices.append( [shift_x + r1 * np.cos(phi1),
+                              shift_y + r1 * np.sin(phi1), z1] )
+            vertices.append( [shift_x + r1 * np.cos(phi1),
+                              shift_y + r1 * np.sin(phi1), z2] )
+            for phi in np.arange( phi1, phi2, arc_step ):
+                vertices.append( [shift_x + r1 * np.cos(phi),
+                                  shift_y + r1 * np.sin(phi), z2] )
+            vertices.append( [shift_x + r1 * np.cos(phi2),
+                              shift_y + r1 * np.sin(phi2), z2] )
+            vertices.append( [shift_x + r1 * np.cos(phi2),
+                              shift_y + r1 * np.sin(phi2), z1] )
+            vertices.append( [shift_x + r1 * np.cos(phi2),
+                              shift_y + r1 * np.sin(phi2), z2] )
+            vertices.append( [shift_x + r2 * np.cos(phi2),
+                              shift_y + r2 * np.sin(phi2), z2] )
+            vertices.append( [shift_x + r2 * np.cos(phi2),
+                              shift_y + r2 * np.sin(phi2), z1] )
+            vertices.append( [shift_x + r2 * np.cos(phi2),
+                              shift_y + r2 * np.sin(phi2), z2] )
+            for phi in np.arange( phi2, phi1, -arc_step ):
+                vertices.append( [shift_x + r2 * np.cos(phi),
+                                  shift_y + r2 * np.sin(phi), z2] )
+            vertices.append( [shift_x + r2 * np.cos(phi1),
+                              shift_y + r2 * np.sin(phi1), z2] )
+            vertices.append( [shift_x + r2 * np.cos(phi1),
+                              shift_y + r2 * np.sin(phi1), z1] )
+            vertices.append( [shift_x + r2 * np.cos(phi1),
+                              shift_y + r2 * np.sin(phi1), z2] )
+            vertices.append( [shift_x + r1 * np.cos(phi1),
+                              shift_y + r1 * np.sin(phi1), z2] )
+            x = [ v[0] for v in vertices ]
+            y = [ v[1] for v in vertices ]
+            z = [ v[2] for v in vertices ]
+            ax.plot( x, y, z, label=self.name )
+        else:
+            print( 'tube visualization unsupported' )
+
+            
+    def export( self ):
+        as_dict = {}
+        sec_name = "Inner_region_tube" + "." + self.name
+        as_dict[sec_name] = {}
+        as_dict[sec_name]["potential"] = self.potential
+        as_dict[sec_name]["tube_axis_start_x"] = self.tube_axis_start_x
+        as_dict[sec_name]["tube_axis_end_x"] = self.tube_axis_end_x
+        as_dict[sec_name]["tube_axis_start_y"] = self.tube_axis_start_y
+        as_dict[sec_name]["tube_axis_end_y"] = self.tube_axis_end_y
+        as_dict[sec_name]["tube_axis_start_z"] = self.tube_axis_start_z
+        as_dict[sec_name]["tube_axis_end_z"] = self.tube_axis_end_z
+        as_dict[sec_name]["tube_inner_radius"] = self.tube_inner_radius
+        as_dict[sec_name]["tube_outer_radius"] = self.tube_outer_radius
+        return as_dict        
+
+
+
+class InnerRegionCylinderAlongAxis():
+    def __init__( self, name = 'cylinder',
+                  potential = 0, axis = 'z',
+                  cylinder_axis_start_x = 1, cylinder_axis_start_y = 1,
+                  cylinder_axis_start_z = 1,
+                  cylinder_length = 3, cylinder_radius = 1 ):
+        self.name = name
+        self.potential = potential
+        self.axis = axis
+        self.cylinder_axis_start_x = cylinder_axis_start_x
+        self.cylinder_axis_start_y = cylinder_axis_start_y
+        self.cylinder_axis_start_z = cylinder_axis_start_z
+        if axis == 'x':                        
+            self.cylinder_axis_end_x = cylinder_axis_start_x + cylinder_length
+            self.cylinder_axis_end_y = cylinder_axis_start_y
+            self.cylinder_axis_end_z = cylinder_axis_start_z
+        elif axis == 'y':
+            self.cylinder_axis_end_x = cylinder_axis_start_x
+            self.cylinder_axis_end_y = cylinder_axis_start_y + cylinder_length
+            self.cylinder_axis_end_z = cylinder_axis_start_z
+        elif axis == 'z':
+            self.cylinder_axis_end_x = cylinder_axis_start_x
+            self.cylinder_axis_end_y = cylinder_axis_start_y
+            self.cylinder_axis_end_z = cylinder_axis_start_z + cylinder_length
+        else:
+            print( 'Unknown axis:', axis, ". Choose one of 'x', 'y', 'z'" )
+            return None
+        self.cylinder_radius = cylinder_radius
+
+
+    def visualize( self, ax ):
+        self.draw_cylinder( ax )
+
+
+    def draw_cylinder( self, ax ):
+        vertices = []
+        arc_step = 5.0 / 180.0 * np.pi
+        phi1 = 0
+        phi2 = 2.0 * np.pi
+        r = self.cylinder_radius
+        if self.axis == 'z':            
+            shift_x = self.cylinder_axis_start_x
+            shift_y = self.cylinder_axis_start_y
+            z1 = self.cylinder_axis_start_z
+            z2 = self.cylinder_axis_end_z
+            for phi in np.arange( phi1, phi2, arc_step ):
+                vertices.append( [shift_x + r * np.cos(phi),
+                                  shift_y + r * np.sin(phi), z1] )
+            vertices.append( [shift_x + r * np.cos(phi2),
+                              shift_y + r * np.sin(phi2), z1] )
+            vertices.append( [shift_x + r * np.cos(phi2),
+                              shift_y + r * np.sin(phi2), z2] )
+            for phi in np.arange( phi2, phi1, -arc_step ):
+                vertices.append( [shift_x + r * np.cos(phi),
+                                  shift_y + r * np.sin(phi), z2] )
+            vertices.append( [shift_x + r * np.cos(phi1),
+                              shift_y + r * np.sin(phi1), z2] )
+            x = [ v[0] for v in vertices ]
+            y = [ v[1] for v in vertices ]
+            z = [ v[2] for v in vertices ]
+            ax.plot( x, y, z, label=self.name )
+        else:
+            print( 'cylinder visualization unsupported' )
+
+            
+    def export( self ):
+        as_dict = {}
+        sec_name = "Inner_region_cylinder" + "." + self.name
+        as_dict[sec_name] = {}
+        as_dict[sec_name]["potential"] = self.potential
+        as_dict[sec_name]["cylinder_axis_start_x"] = self.cylinder_axis_start_x
+        as_dict[sec_name]["cylinder_axis_end_x"] = self.cylinder_axis_end_x
+        as_dict[sec_name]["cylinder_axis_start_y"] = self.cylinder_axis_start_y
+        as_dict[sec_name]["cylinder_axis_end_y"] = self.cylinder_axis_end_y
+        as_dict[sec_name]["cylinder_axis_start_z"] = self.cylinder_axis_start_z
+        as_dict[sec_name]["cylinder_axis_end_z"] = self.cylinder_axis_end_z
+        as_dict[sec_name]["cylinder_radius"] = self.cylinder_radius
+        return as_dict        
+
+
+
+
+
+
+    
+    
 
 class OutputFile:
     def __init__( self, output_filename_prefix = "out_", output_filename_suffix = ".h5" ):
