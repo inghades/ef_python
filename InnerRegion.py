@@ -12,8 +12,6 @@ class InnerRegion():
     def __init__( self ):
         self.total_absorbed_particles = 0
         self.total_absorbed_charge = 0
-        self.absorbed_particles_current_timestep = 0
-        self.absorbed_charge_current_timestep = 0
         self.inner_nodes = []
         self.inner_nodes_not_at_domain_edge = []
 
@@ -64,8 +62,8 @@ class InnerRegion():
     def check_if_particle_inside_and_count_charge( self, p ):
         in_or_out = self.check_if_particle_inside( p )
         if in_or_out:
-            self.absorbed_particles_current_timestep += 1
-            self.absorbed_charge_current_timestep += p.charge
+            self.total_absorbed_particles += 1
+            self.total_absorbed_charge += p.charge
         return in_or_out
 
 
